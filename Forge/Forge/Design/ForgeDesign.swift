@@ -203,6 +203,50 @@ struct ForgeBackgroundBlurModifier: ViewModifier {
     }
 }
 
+struct ForgeGlobalBlurModifier: ViewModifier {
+    let isActive: Bool
+    let intensity: Double
+    
+    func body(content: Content) -> some View {
+        ZStack {
+            content
+                .blur(radius: isActive ? intensity * 8 : 0)
+                .animation(ForgeDesign.Animation.smooth, value: isActive)
+        }
+    }
+}
+
+struct ForgeElevatedCardModifier: ViewModifier {
+    let isPressed: Bool
+    let pressProgress: Double
+    
+    func body(content: Content) -> some View {
+        content
+            .scaleEffect(isPressed ? 0.98 : 1.0)
+            .shadow(
+                color: ForgeDesign.Shadow.medium,
+                radius: isPressed ? 12 : 4,
+                x: 0,
+                y: isPressed ? 8 : 2
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: ForgeDesign.CornerRadius.md)
+                    .stroke(
+                        ForgeDesign.Colors.accent.opacity(pressProgress * 0.8),
+                        lineWidth: 2 + (pressProgress * 2)
+                    )
+                    .shadow(
+                        color: ForgeDesign.Colors.accent.opacity(pressProgress * 0.6),
+                        radius: 8 + (pressProgress * 4),
+                        x: 0,
+                        y: 0
+                    )
+            )
+            .animation(ForgeDesign.Animation.smooth, value: isPressed)
+            .animation(ForgeDesign.Animation.gentleSpring, value: pressProgress)
+    }
+}
+
 // MARK: - View Extensions
 extension View {
     func forgeCard(elevated: Bool = false) -> some View {
@@ -219,5 +263,13 @@ extension View {
     
     func forgeBackgroundBlur(isActive: Bool, intensity: Double = 1.0) -> some View {
         modifier(ForgeBackgroundBlurModifier(isActive: isActive, intensity: intensity))
+    }
+    
+    func forgeGlobalBlur(isActive: Bool, intensity: Double = 1.0) -> some View {
+        modifier(ForgeGlobalBlurModifier(isActive: isActive, intensity: intensity))
+    }
+    
+    func forgeElevatedCard(isPressed: Bool, pressProgress: Double) -> some View {
+        modifier(ForgeElevatedCardModifier(isPressed: isPressed, pressProgress: pressProgress))
     }
 }

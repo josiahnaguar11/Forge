@@ -14,15 +14,21 @@ struct DashboardView: View {
     
     @State private var showingAddHabit = false
     @State private var selectedHabit: Habit?
+    @State private var isAnyCardPressed = false
+    @State private var pressIntensity: Double = 0.0
     
     var body: some View {
         ScrollView {
             LazyVStack(spacing: ForgeDesign.Spacing.lg) {
                 headerSection
+                    .forgeGlobalBlur(isActive: isAnyCardPressed, intensity: pressIntensity * 0.5)
                 momentumScoreSection
+                    .forgeGlobalBlur(isActive: isAnyCardPressed, intensity: pressIntensity * 0.5)
                 todaysForgeSection
                 weeklyHeatmapSection
+                    .forgeGlobalBlur(isActive: isAnyCardPressed, intensity: pressIntensity * 0.5)
                 insightsSection
+                    .forgeGlobalBlur(isActive: isAnyCardPressed, intensity: pressIntensity * 0.5)
             }
             .padding(ForgeDesign.Spacing.md)
         }

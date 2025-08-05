@@ -31,12 +31,14 @@ struct HabitCardView: View {
                 completedCardView
                     .rotation3DEffect(.degrees(180), axis: (x: 0, y: 1, z: 0))
                     .transition(.asymmetric(insertion: .identity, removal: .opacity))
+                    .zIndex(1)
             } else {
                 habitCardContent
                     .rotation3DEffect(.degrees(showingFlipAnimation ? 180 : 0), axis: (x: 0, y: 1, z: 0))
-                    .forgeBackgroundBlur(isActive: isPressed, intensity: pressProgress * 0.3)
+                    .zIndex(isPressed ? 2 : 0)
             }
         }
+
         .animation(ForgeDesign.Animation.gentleSpring, value: showingFlipAnimation)
         .sheet(isPresented: $showingValueInput) {
             ValueInputView(
@@ -67,13 +69,10 @@ struct HabitCardView: View {
         .background(cardBackground)
         .clipShape(RoundedRectangle(cornerRadius: ForgeDesign.CornerRadius.md))
         .overlay(pressOverlay)
-        .scaleEffect(isPressed ? 0.98 : 1.0)
+        .forgeElevatedCard(isPressed: isPressed, pressProgress: pressProgress)
         .blur(radius: showingFlipAnimation ? 2 : 0)
         .gesture(pressAndHoldGesture)
-        .animation(ForgeDesign.Animation.smooth, value: isPressed)
-        .animation(ForgeDesign.Animation.gentleSpring, value: pressProgress)
         .animation(ForgeDesign.Animation.medium, value: showingFlipAnimation)
-        .zIndex(isPressed ? 1 : 0)
     }
     
     private var habitIcon: some View {
@@ -180,17 +179,32 @@ struct HabitCardView: View {
     private var completedCardView: some View {
         VStack(spacing: ForgeDesign.Spacing.md) {
             HStack {
-                Text("✓ Completed")
-                    .font(ForgeDesign.Typography.headline)
-                    .foregroundColor(ForgeDesign.Colors.success)
+                HStack(spacing: ForgeDesign.Spacing.xs) {
+                    Image(systemName: "checkmark.circle.fill")
+                        .font(.title3)
+                        .foregroundColor(ForgeDesign.Colors.success)
+                    
+                    Text("Completed")
+                        .font(ForgeDesign.Typography.headline)
+                        .foregroundColor(ForgeDesign.Colors.textPrimary)
+                        .fontWeight(.semibold)
+                }
                 
                 Spacer()
                 
                 Button("Undo") {
                     undoCompletion()
                 }
-                .font(ForgeDesign.Typography.caption1)
-                .foregroundColor(ForgeDesign.Colors.accent)
+                .font(ForgeDesign.Typography.subheadline)
+                .fontWeight(.medium)
+                .foregroundColor(ForgeDesign.Colors.background)
+                .padding(.horizontal, ForgeDesign.Spacing.sm)
+                .padding(.vertical, ForgeDesign.Spacing.xs)
+                .background(
+                    RoundedRectangle(cornerRadius: ForgeDesign.CornerRadius.sm)
+                        .fill(ForgeDesign.Colors.accent)
+                        .shadow(color: ForgeDesign.Shadow.small, radius: 2, x: 0, y: 1)
+                )
             }
             
             SparklineView(habit: habit, habitManager: habitManager)
@@ -199,10 +213,16 @@ struct HabitCardView: View {
         .padding(ForgeDesign.Spacing.md)
         .background(
             RoundedRectangle(cornerRadius: ForgeDesign.CornerRadius.md)
-                .fill(ForgeDesign.Colors.surface)
+                .fill(ForgeDesign.Colors.surfaceElevated)
                 .overlay(
                     RoundedRectangle(cornerRadius: ForgeDesign.CornerRadius.md)
-                        .stroke(ForgeDesign.Colors.success.opacity(0.3), lineWidth: 1)
+                        .stroke(ForgeDesign.Colors.success.opacity(0.4), lineWidth: 2)
+                )
+                .shadow(
+                    color: ForgeDesign.Colors.success.opacity(0.2),
+                    radius: 8,
+                    x: 0,
+                    y: 4
                 )
         )
         .onTapGesture {
@@ -234,38 +254,24 @@ struct HabitCardView: View {
     
     private var pressOverlay: some View {
         ZStack {
-            // Base press overlay with glow effect
-            RoundedRectangle(cornerRadius: ForgeDesign.CornerRadius.md)
-                .stroke(
-                    ForgeDesign.Colors.accent.opacity(pressProgress * 0.8),
-                    lineWidth: 2
-                )
-                .shadow(
-                    color: ForgeDesign.Colors.accent.opacity(pressProgress * 0.4),
-                    radius: 8,
-                    x: 0,
-                    y: 0
-                )
-            
             // Subtle background fill during press
             RoundedRectangle(cornerRadius: ForgeDesign.CornerRadius.md)
-                .fill(ForgeDesign.Colors.accent.opacity(pressProgress * 0.05))
+                .fill(ForgeDesign.Colors.accent.opacity(pressProgress * 0.08))
             
-            // Progress ring overlay
-            RoundedRectangle(cornerRadius: ForgeDesign.CornerRadius.md)
-                .trim(from: 0, to: pressProgress)
-                .stroke(
-                    ForgeDesign.Colors.accent,
-                    style: StrokeStyle(lineWidth: 3, lineCap: .round)
-                )
-                .rotationEffect(.degrees(-90))
-                .opacity(isPressed ? 1 : 0)
-                .shadow(
-                    color: ForgeDesign.Colors.accent.opacity(0.6),
-                    radius: 4,
-                    x: 0,
-                    y: 0
-                )
+            // Circular progress indicator
+            if isPressed {
+                Circle()
+                    .trim(from: 0, to: pressProgress)
+                    .stroke(
+                        ForgeDesign.Colors.accent,
+                        style: StrokeStyle(lineWidth: 4, lineCap: .round)
+                    )
+                    .frame(width: 60, height: 60)
+                    .rotationEffect(.degrees(-90))
+                    .scaleEffect(0.8 + (pressProgress * 0.2))
+                    .opacity(0.9)
+                    .animation(ForgeDesign.Animation.smooth, value: pressProgress)
+            }
         }
         .allowsHitTesting(false)
     }
