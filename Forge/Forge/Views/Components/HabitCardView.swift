@@ -34,9 +34,10 @@ struct HabitCardView: View {
             } else {
                 habitCardContent
                     .rotation3DEffect(.degrees(showingFlipAnimation ? 180 : 0), axis: (x: 0, y: 1, z: 0))
+                    .forgeBackgroundBlur(isActive: isPressed, intensity: pressProgress * 0.3)
             }
         }
-        .animation(ForgeDesign.Animation.medium, value: showingFlipAnimation)
+        .animation(ForgeDesign.Animation.gentleSpring, value: showingFlipAnimation)
         .sheet(isPresented: $showingValueInput) {
             ValueInputView(
                 habit: habit,
@@ -64,10 +65,15 @@ struct HabitCardView: View {
         }
         .padding(ForgeDesign.Spacing.md)
         .background(cardBackground)
+        .clipShape(RoundedRectangle(cornerRadius: ForgeDesign.CornerRadius.md))
         .overlay(pressOverlay)
+        .scaleEffect(isPressed ? 0.98 : 1.0)
+        .blur(radius: showingFlipAnimation ? 2 : 0)
         .gesture(pressAndHoldGesture)
-        .animation(ForgeDesign.Animation.fast, value: isPressed)
-        .animation(ForgeDesign.Animation.fast, value: pressProgress)
+        .animation(ForgeDesign.Animation.smooth, value: isPressed)
+        .animation(ForgeDesign.Animation.gentleSpring, value: pressProgress)
+        .animation(ForgeDesign.Animation.medium, value: showingFlipAnimation)
+        .zIndex(isPressed ? 1 : 0)
     }
     
     private var habitIcon: some View {
@@ -104,11 +110,16 @@ struct HabitCardView: View {
             Text(habit.name)
                 .font(ForgeDesign.Typography.headline)
                 .foregroundColor(ForgeDesign.Colors.textPrimary)
+                .lineLimit(2)
+                .fixedSize(horizontal: false, vertical: true)
+                .minimumScaleFactor(0.9)
             
             HStack(spacing: ForgeDesign.Spacing.xs) {
                 Text(habit.pillar.rawValue)
                     .font(ForgeDesign.Typography.caption1)
                     .foregroundColor(pillarColor)
+                    .lineLimit(1)
+                    .fixedSize()
                 
                 Text("•")
                     .font(ForgeDesign.Typography.caption1)
@@ -117,6 +128,8 @@ struct HabitCardView: View {
                 Text(difficultyText)
                     .font(ForgeDesign.Typography.caption1)
                     .foregroundColor(ForgeDesign.Colors.textSecondary)
+                    .lineLimit(1)
+                    .fixedSize()
                 
                 if habit.type != .binary {
                     Text("•")
@@ -126,8 +139,11 @@ struct HabitCardView: View {
                     Text(targetText)
                         .font(ForgeDesign.Typography.caption1)
                         .foregroundColor(ForgeDesign.Colors.textSecondary)
+                        .lineLimit(1)
+                        .fixedSize()
                 }
             }
+            .fixedSize(horizontal: false, vertical: true)
         }
     }
     
@@ -208,36 +224,50 @@ struct HabitCardView: View {
                         lineWidth: 1
                     )
             )
-            .scaleEffect(isPressed ? 0.98 : 1.0)
             .shadow(
                 color: ForgeDesign.Shadow.small,
-                radius: isPressed ? 2 : 4,
+                radius: isPressed ? 6 : 4,
                 x: 0,
-                y: isPressed ? 1 : 2
+                y: isPressed ? 3 : 2
             )
     }
     
     private var pressOverlay: some View {
-        RoundedRectangle(cornerRadius: ForgeDesign.CornerRadius.md)
-            .stroke(
-                ForgeDesign.Colors.accent.opacity(pressProgress),
-                lineWidth: 2
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: ForgeDesign.CornerRadius.md)
-                    .fill(ForgeDesign.Colors.accent.opacity(pressProgress * 0.1))
-            )
-            .overlay(
-                // Progress ring overlay
-                RoundedRectangle(cornerRadius: ForgeDesign.CornerRadius.md)
-                    .trim(from: 0, to: pressProgress)
-                    .stroke(
-                        ForgeDesign.Colors.accent,
-                        style: StrokeStyle(lineWidth: 3, lineCap: .round)
-                    )
-                    .rotationEffect(.degrees(-90))
-                    .opacity(isPressed ? 1 : 0)
-            )
+        ZStack {
+            // Base press overlay with glow effect
+            RoundedRectangle(cornerRadius: ForgeDesign.CornerRadius.md)
+                .stroke(
+                    ForgeDesign.Colors.accent.opacity(pressProgress * 0.8),
+                    lineWidth: 2
+                )
+                .shadow(
+                    color: ForgeDesign.Colors.accent.opacity(pressProgress * 0.4),
+                    radius: 8,
+                    x: 0,
+                    y: 0
+                )
+            
+            // Subtle background fill during press
+            RoundedRectangle(cornerRadius: ForgeDesign.CornerRadius.md)
+                .fill(ForgeDesign.Colors.accent.opacity(pressProgress * 0.05))
+            
+            // Progress ring overlay
+            RoundedRectangle(cornerRadius: ForgeDesign.CornerRadius.md)
+                .trim(from: 0, to: pressProgress)
+                .stroke(
+                    ForgeDesign.Colors.accent,
+                    style: StrokeStyle(lineWidth: 3, lineCap: .round)
+                )
+                .rotationEffect(.degrees(-90))
+                .opacity(isPressed ? 1 : 0)
+                .shadow(
+                    color: ForgeDesign.Colors.accent.opacity(0.6),
+                    radius: 4,
+                    x: 0,
+                    y: 0
+                )
+        }
+        .allowsHitTesting(false)
     }
     
     // MARK: - Gesture & Actions
@@ -261,8 +291,12 @@ struct HabitCardView: View {
     private func resetPressState() {
         pressTimer?.invalidate()
         pressTimer = nil
-        withAnimation(ForgeDesign.Animation.fast) {
+        
+        withAnimation(ForgeDesign.Animation.smooth) {
             isPressed = false
+        }
+        
+        withAnimation(ForgeDesign.Animation.gentleSpring) {
             pressProgress = 0.0
         }
     }
@@ -270,25 +304,20 @@ struct HabitCardView: View {
     private func startProgressTimer() {
         pressTimer?.invalidate()
         
-        let updateInterval: TimeInterval = 0.05 // 50ms updates for smooth animation
+        let updateInterval: TimeInterval = 0.03 // Increased to 30ms for smoother animation
         var startTime = Date()
         
         pressTimer = Timer.scheduledTimer(withTimeInterval: updateInterval, repeats: true) { timer in
             let elapsed = Date().timeIntervalSince(startTime)
             let progress = elapsed / pressHoldDuration
             
-            withAnimation(ForgeDesign.Animation.fast) {
+            withAnimation(ForgeDesign.Animation.smooth) {
                 pressProgress = min(progress, 1.0)
-            }
-            
-            // Haptic feedback at key points
-            if pressProgress >= 0.5 && pressProgress < 0.6 {
-                let impactFeedback = UIImpactFeedbackGenerator(style: .light)
-                impactFeedback.impactOccurred()
             }
             
             if progress >= 1.0 {
                 timer.invalidate()
+                completeHabitAction()
             }
         }
     }
@@ -310,14 +339,14 @@ struct HabitCardView: View {
         habitManager.logHabit(habit, value: value, duration: duration)
         
         // Show flip animation
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-            withAnimation(ForgeDesign.Animation.medium) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+            withAnimation(ForgeDesign.Animation.gentleSpring) {
                 showingFlipAnimation = true
             }
             
-            // Auto-hide after 3 seconds
-            DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
-                withAnimation(ForgeDesign.Animation.medium) {
+            // Auto-hide after 2.5 seconds
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
+                withAnimation(ForgeDesign.Animation.gentleSpring) {
                     showingFlipAnimation = false
                 }
             }
@@ -326,7 +355,7 @@ struct HabitCardView: View {
     
     private func undoCompletion() {
         habitManager.unlogHabit(habit)
-        withAnimation(ForgeDesign.Animation.medium) {
+        withAnimation(ForgeDesign.Animation.gentleSpring) {
             showingFlipAnimation = false
         }
     }

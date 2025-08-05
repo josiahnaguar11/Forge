@@ -362,11 +362,16 @@ struct HabitRowView: View {
                 Text(habit.name)
                     .font(ForgeDesign.Typography.headline)
                     .foregroundColor(ForgeDesign.Colors.textPrimary)
+                    .lineLimit(2)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .minimumScaleFactor(0.9)
                 
                 HStack {
                     Text(habit.pillar.rawValue)
                         .font(ForgeDesign.Typography.caption1)
                         .foregroundColor(pillarColor)
+                        .lineLimit(1)
+                        .fixedSize()
                     
                     Text("•")
                         .font(ForgeDesign.Typography.caption1)
@@ -375,7 +380,10 @@ struct HabitRowView: View {
                     Text(habit.frequency.description)
                         .font(ForgeDesign.Typography.caption1)
                         .foregroundColor(ForgeDesign.Colors.textSecondary)
+                        .lineLimit(1)
+                        .fixedSize()
                 }
+                .fixedSize(horizontal: false, vertical: true)
             }
             
             Spacer()

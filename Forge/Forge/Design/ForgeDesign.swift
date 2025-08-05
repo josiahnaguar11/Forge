@@ -101,11 +101,13 @@ struct ForgeDesign {
     
     // MARK: - Animation
     struct Animation {
-        static let fast = SwiftUI.Animation.easeInOut(duration: 0.2)
-        static let medium = SwiftUI.Animation.easeInOut(duration: 0.3)
-        static let slow = SwiftUI.Animation.easeInOut(duration: 0.5)
-        static let spring = SwiftUI.Animation.spring(response: 0.6, dampingFraction: 0.8)
-        static let bouncy = SwiftUI.Animation.spring(response: 0.4, dampingFraction: 0.6)
+        static let fast = SwiftUI.Animation.easeInOut(duration: 0.15)
+        static let medium = SwiftUI.Animation.easeInOut(duration: 0.25)
+        static let slow = SwiftUI.Animation.easeInOut(duration: 0.4)
+        static let spring = SwiftUI.Animation.spring(response: 0.5, dampingFraction: 0.75)
+        static let bouncy = SwiftUI.Animation.spring(response: 0.35, dampingFraction: 0.65)
+        static let smooth = SwiftUI.Animation.interpolatingSpring(stiffness: 300, damping: 30)
+        static let gentleSpring = SwiftUI.Animation.spring(response: 0.6, dampingFraction: 0.8, blendDuration: 0.1)
     }
 }
 
@@ -168,7 +170,7 @@ struct ForgePressableModifier: ViewModifier {
         content
             .scaleEffect(isPressed ? 0.95 : 1.0)
             .opacity(isPressed ? 0.8 : 1.0)
-            .animation(ForgeDesign.Animation.fast, value: isPressed)
+            .animation(ForgeDesign.Animation.smooth, value: isPressed)
             .onLongPressGesture(minimumDuration: 0, maximumDistance: .infinity, pressing: { pressing in
                 isPressed = pressing
             }, perform: {})
@@ -186,6 +188,21 @@ struct ForgeGlowModifier: ViewModifier {
     }
 }
 
+struct ForgeBackgroundBlurModifier: ViewModifier {
+    let isActive: Bool
+    let intensity: Double
+    
+    func body(content: Content) -> some View {
+        content
+            .background(
+                Rectangle()
+                    .fill(ForgeDesign.Colors.background.opacity(isActive ? intensity * 0.3 : 0))
+                    .blur(radius: isActive ? intensity * 10 : 0)
+                    .allowsHitTesting(false)
+            )
+    }
+}
+
 // MARK: - View Extensions
 extension View {
     func forgeCard(elevated: Bool = false) -> some View {
@@ -198,5 +215,9 @@ extension View {
     
     func forgeGlow(color: Color = ForgeDesign.Colors.accent, radius: CGFloat = 4) -> some View {
         modifier(ForgeGlowModifier(color: color, radius: radius))
+    }
+    
+    func forgeBackgroundBlur(isActive: Bool, intensity: Double = 1.0) -> some View {
+        modifier(ForgeBackgroundBlurModifier(isActive: isActive, intensity: intensity))
     }
 }
