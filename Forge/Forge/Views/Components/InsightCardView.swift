@@ -14,17 +14,22 @@ struct InsightCardView: View {
         HStack(spacing: ForgeDesign.Spacing.md) {
             iconView
             
-            VStack(alignment: .leading, spacing: ForgeDesign.Spacing.xs) {
+            VStack(alignment: .leading, spacing: ForgeDesign.Spacing.sm) {
                 HStack {
                     Text(insight.title)
                         .font(ForgeDesign.Typography.headline)
                         .foregroundColor(ForgeDesign.Colors.textPrimary)
+                        .lineLimit(2)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .minimumScaleFactor(0.9)
                     
                     Spacer()
                     
                     Text(insight.strengthDescription)
                         .font(ForgeDesign.Typography.caption1)
                         .foregroundColor(strengthColor)
+                        .lineLimit(1)
+                        .fixedSize()
                         .padding(.horizontal, ForgeDesign.Spacing.xs)
                         .padding(.vertical, 2)
                         .background(
@@ -36,7 +41,9 @@ struct InsightCardView: View {
                 Text(insight.description)
                     .font(ForgeDesign.Typography.subheadline)
                     .foregroundColor(ForgeDesign.Colors.textSecondary)
+                    .lineLimit(3)
                     .fixedSize(horizontal: false, vertical: true)
+                    .minimumScaleFactor(0.95)
             }
         }
         .padding(ForgeDesign.Spacing.md)
