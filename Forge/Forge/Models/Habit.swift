@@ -26,19 +26,19 @@ enum HabitType: String, CaseIterable, Codable {
 
 enum HabitCategory: String, CaseIterable, Codable {
     case build = "Build"
-    case break = "Break"
+    case `break` = "Break"
     
     var description: String {
         switch self {
         case .build:
             return "Building a positive habit"
-        case .break:
+        case .`break`:
             return "Breaking a negative habit"
         }
     }
 }
 
-enum HabitFrequency: Codable, Equatable {
+enum HabitFrequency: Codable, Equatable, Hashable {
     case daily
     case specificDays([Int]) // 0 = Sunday, 1 = Monday, etc.
     case xTimesPerWeek(Int)
@@ -48,7 +48,7 @@ enum HabitFrequency: Codable, Equatable {
         case .daily:
             return "Daily"
         case .specificDays(let days):
-            let dayNames = days.map { Calendar.current.weekdaySymbols[$0] }.joined(separator = ", ")
+            let dayNames = days.map { Calendar.current.weekdaySymbols[$0] }.joined(separator: ", ")
             return dayNames
         case .xTimesPerWeek(let times):
             return "\(times) times per week"

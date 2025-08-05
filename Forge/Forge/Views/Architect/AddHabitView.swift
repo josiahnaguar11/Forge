@@ -356,7 +356,7 @@ struct AddHabitView: View {
             .padding(.vertical, ForgeDesign.Spacing.sm)
             .background(
                 RoundedRectangle(cornerRadius: ForgeDesign.CornerRadius.md)
-                    .fill(isStepValid ? ForgeDesign.Colors.primaryGradient : ForgeDesign.Colors.textTertiary)
+                    .fill(isStepValid ? AnyShapeStyle(ForgeDesign.Colors.primaryGradient) : AnyShapeStyle(ForgeDesign.Colors.textTertiary))
             )
             .disabled(!isStepValid)
         }

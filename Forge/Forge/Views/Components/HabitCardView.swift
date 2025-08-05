@@ -18,6 +18,7 @@ struct HabitCardView: View {
     @State private var showingValueInput = false
     @State private var inputValue = ""
     @State private var showingTimer = false
+    @State private var pressTimer: Timer?
     
     private let pressHoldDuration: Double = 1.0
     private var isCompleted: Bool {
@@ -242,37 +243,53 @@ struct HabitCardView: View {
     // MARK: - Gesture & Actions
     
     private var pressAndHoldGesture: some Gesture {
-        LongPressGesture(minimumDuration: pressHoldDuration)
-            .onChanged { value in
-                isPressed = true
-                
-                // Animate progress during hold
-                withAnimation(ForgeDesign.Animation.medium) {
-                    pressProgress = min(value / pressHoldDuration, 1.0)
-                }
-                
-                // Haptic feedback at key points
-                if pressProgress >= 0.5 && pressProgress < 0.6 {
-                    let impactFeedback = UIImpactFeedbackGenerator(style: .light)
-                    impactFeedback.impactOccurred()
+        DragGesture(minimumDistance: 0)
+            .onChanged { _ in
+                if !isPressed {
+                    isPressed = true
+                    startProgressTimer()
                 }
             }
             .onEnded { _ in
-                completeHabitAction()
+                if pressProgress >= 1.0 {
+                    completeHabitAction()
+                }
                 resetPressState()
             }
-            .simultaneously(with: DragGesture(minimumDistance: 0)
-                .onEnded { _ in
-                    if pressProgress < 1.0 {
-                        resetPressState()
-                    }
-                })
     }
     
     private func resetPressState() {
+        pressTimer?.invalidate()
+        pressTimer = nil
         withAnimation(ForgeDesign.Animation.fast) {
             isPressed = false
             pressProgress = 0.0
+        }
+    }
+    
+    private func startProgressTimer() {
+        pressTimer?.invalidate()
+        
+        let updateInterval: TimeInterval = 0.05 // 50ms updates for smooth animation
+        var startTime = Date()
+        
+        pressTimer = Timer.scheduledTimer(withTimeInterval: updateInterval, repeats: true) { timer in
+            let elapsed = Date().timeIntervalSince(startTime)
+            let progress = elapsed / pressHoldDuration
+            
+            withAnimation(ForgeDesign.Animation.fast) {
+                pressProgress = min(progress, 1.0)
+            }
+            
+            // Haptic feedback at key points
+            if pressProgress >= 0.5 && pressProgress < 0.6 {
+                let impactFeedback = UIImpactFeedbackGenerator(style: .light)
+                impactFeedback.impactOccurred()
+            }
+            
+            if progress >= 1.0 {
+                timer.invalidate()
+            }
         }
     }
     

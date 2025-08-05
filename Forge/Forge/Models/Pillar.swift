@@ -7,7 +7,7 @@
 
 import Foundation
 
-enum Pillar: String, CaseIterable, Identifiable {
+enum Pillar: String, CaseIterable, Identifiable, Codable {
     case health = "Health"
     case wealth = "Wealth"
     case knowledge = "Knowledge"
